@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "02_BUTTON",
-    "project_version":    "348bd9c",
+    "project_version":    "5f7f6e9-dirty",
     "project_path":       "C:/Users/Yazid/Downloads/UP240355_ESP/UP240355_ESP/02_BUTTON",
     "idf_path":           "C:/Users/Yazid/esp/v5.4.2/esp-idf",
     "build_dir":          "C:/Users/Yazid/Downloads/UP240355_ESP/UP240355_ESP/02_BUTTON/build",

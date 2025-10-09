@@ -6,6 +6,39 @@
 #define LED    GPIO_NUM_2
 #define BUTTON GPIO_NUM_5
 
+
+void punto(void)
+{
+gpio_set_level(LED, 1); // Encendemos el LED
+        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
+        gpio_set_level(LED, 0); // Apagamos el LED
+        vTaskDelay(pdMS_TO_TICKS(200)); // Esperamos 1 segundo
+}
+
+void raya(void)
+{
+    gpio_set_level(LED, 1); // Encendemos el LED
+        vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
+        gpio_set_level(LED, 0); // Apagamos el LED
+        vTaskDelay(pdMS_TO_TICKS(500)); // Esperamos 1 segundo
+}
+
+void SOS()
+{
+    for (int i = 0; 1 < 3; i++)
+    {
+    punto();
+    }
+    for (int i = 0; 1 < 3; i++)
+    {
+    raya();
+    }
+    for (int i = 0; 1 < 3; i++)
+    {
+    punto();
+    }
+}
+
 void app_main(void)
 {
     // Reinicia la configuración de los pines LED y botón
