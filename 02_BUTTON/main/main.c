@@ -3,8 +3,8 @@
 #include "freertos/FreeRTOS.h"
 
 // Definición de los pines para el LED y el botón
-#define LED    GPIO_NUM_2
-#define BUTTON GPIO_NUM_5
+#define LED    GPIO_NUM_23
+#define BUTTON GPIO_NUM_22
 
 
 void punto(void)
@@ -63,7 +63,7 @@ void app_main(void)
         // Si el botón está presionado (nivel bajo)
         if(status == false)
         {
-            gpio_set_level(LED, 1); // Enciende el LED
+            SOS(); // Enciende el LED
         }
         else
         {
