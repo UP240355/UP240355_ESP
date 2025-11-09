@@ -53,25 +53,44 @@ void app_main(void)
     // Configura el pin del botón como entrada
     gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
 
-    // Bucle principal
-    while(true)
-    {
-        // Lee el estado del botón (0 si está presionado, 1 si no)
-        int status = gpio_get_level(BUTTON
-    );
+    int buttonState = 1;
+    int lastButtonState = 1;
+    int pressCount = 0;  // Contador de presiones
+    TickType_t lastPressTime = 0;
 
-        // Si el botón está presionado (nivel bajo)
-        if(status == false)
-        {
-            SOS(); // Enciende el LED
+    while (true) {
+        buttonState = gpio_get_level(BUTTON);
+
+        // Detectar flanco de bajada (botón presionado)
+        if (buttonState == 0 && lastButtonState == 1) {
+            // Anti-rebote
+            vTaskDelay(pdMS_TO_TICKS(50));
+            if (gpio_get_level(BUTTON) == 0) {
+                TickType_t now = xTaskGetTickCount();
+
+                // Si la segunda presión ocurre en menos de 1.5 segundos, cuenta como doble clic
+                if ((now - lastPressTime) < pdMS_TO_TICKS(1500)) {
+                    pressCount++;
+                } else {
+                    pressCount = 1;
+                }
+
+                lastPressTime = now;
+
+                // Si ya hubo dos presiones, enviar SOS
+                if (pressCount == 2) {
+                    SOS();
+                    pressCount = 0; // Reiniciar contador
+                }
+
+                // Esperar a que se suelte el botón
+                while (gpio_get_level(BUTTON) == 0) {
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                }
+            }
         }
-        else
-        {
-            gpio_set_level(LED, 0); // Apaga el LED
-        }
 
-        // Espera 20 ms antes de repetir
-        vTaskDelay(pdMS_TO_TICKS(20)) ;
-    }
-
+        lastButtonState = buttonState;
+        vTaskDelay(pdMS_TO_TICKS(20));
+}
 }
