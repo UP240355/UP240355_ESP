@@ -21,43 +21,86 @@
  * - El manejador de interrupción vuelve a registrar la ISR y habilita la interrupción, lo cual no es necesario y puede causar problemas.
  * - Se utiliza FreeRTOS para la gestión de tareas y retardos.
  */
-#include <stdio.h> // Incluye funciones de entrada/salida estándar
-#include "freertos/FreeRTOS.h" // Incluye FreeRTOS para gestión de tareas
-#include "driver/gpio.h" // Incluye funciones para manejar GPIO
-#include "inttypes.h" // Incluye definiciones de tipos enteros
+#include <stdio.h>
+#include <inttypes.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
 
-#define INT_PIN GPIO_NUM_5 // Define el pin GPIO5 como pin de interrupción
-uint16_t int_count = 0; // Variable para contar interrupciones
-bool button_state = false; // Bandera para indicar si el botón fue presionado
+#define LED    GPIO_NUM_23
+#define BUTTON GPIO_NUM_22
 
-// Manejador de la interrupción externa
+// Variables compartidas entre ISR y tarea principal
+volatile int int_count = 0;
+volatile bool button_state = false;
+
+// ISR con debounce (usa ticks del RTOS)
 static void IRAM_ATTR gpio_isr_handler(void *arg)
 {
-    int_count ++; // Incrementa el contador de interrupciones
-    button_state = true; // Indica que el botón fue presionado
+    TickType_t now = xTaskGetTickCountFromISR();
+    static TickType_t last_isr_tick = 0;
+    const TickType_t debounce_ticks = pdMS_TO_TICKS(200); 
+
+    if ((now - last_isr_tick) > debounce_ticks) {
+        int_count++;
+        button_state = true;
+        last_isr_tick = now;
+    }
 }
 
-// Función principal del programa
+// Función para generar un punto (•) en código Morse
+void punto(void) {
+    gpio_set_level(LED, 1);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    gpio_set_level(LED, 0);
+    vTaskDelay(pdMS_TO_TICKS(200));
+}
+
+// Función para generar una raya (—) en código Morse
+void raya(void) {
+    gpio_set_level(LED, 1);
+    vTaskDelay(pdMS_TO_TICKS(500));
+    gpio_set_level(LED, 0);
+    vTaskDelay(pdMS_TO_TICKS(500));
+}
+
+// Función para enviar la señal SOS en Morse: ••• --- •••
+void SOS(void) {
+    for (int i = 0; i < 3; i++) punto();
+    for (int i = 0; i < 3; i++) raya();
+    for (int i = 0; i < 3; i++) punto();
+}
+
 void app_main(void)
 {
-    gpio_reset_pin(INT_PIN); // Resetea la configuración previa del pin
-    gpio_set_direction(INT_PIN, GPIO_MODE_INPUT); // Configura el pin como entrada
+    // Reset y configura LED
+    gpio_reset_pin(LED);
+    gpio_set_direction(LED, GPIO_MODE_OUTPUT);
+    gpio_set_level(LED, 0); // LED apagado inicialmente
 
-    gpio_set_pull_mode(INT_PIN, GPIO_PULLUP_ONLY); // Activa resistencia pull-up interna
-    gpio_set_intr_type(INT_PIN, GPIO_INTR_POSEDGE); // Configura interrupción por flanco de subida
+    // Reset y configura BUTTON
+    gpio_reset_pin(BUTTON);
+    gpio_set_direction(BUTTON, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON, GPIO_PULLUP_ONLY); // asumo boton a GND
+    gpio_set_intr_type(BUTTON, GPIO_INTR_NEGEDGE); // flanco de bajada (presión a GND)
 
-    gpio_install_isr_service(0); // Instala el servicio de ISR para GPIO
-    gpio_isr_handler_add(INT_PIN, gpio_isr_handler, NULL); // Registra el manejador de la interrupción
+    // Instala servicio ISR y agrega el handler
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(BUTTON, gpio_isr_handler, NULL);
 
-    gpio_intr_enable(INT_PIN); // Habilita la interrupción en el pin
-
-    while(1) // Bucle principal
+    // Bucle principal
+    while (1)
     {
-        if(button_state == true) // Si se detectó una pulsación
+        // Si detectamos 3 pulsos, enviar SOS
+        printf("%d\n", int_count);
+        if (int_count >= 3)
         {
-            printf("%d\n", int_count); // Muestra el contador por consola
-            button_state = false; // Reinicia la bandera
+           int_count = 0;
+           button_state = false;
+           SOS();
         }
-        vTaskDelay(pdMS_TO_TICKS(100)); // Espera 100 ms antes de repetir
-    }
+
+        
+        vTaskDelay(pdMS_TO_TICKS(100));
+}
 }

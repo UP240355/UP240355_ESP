@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "EXTERNAL",
-    "project_version":    "f7b2fb6",
+    "project_version":    "82e4bbb-dirty",
     "project_path":       "C:/Users/Yazid/Downloads/UP240355_ESP/UP240355_ESP/EXTERNAL INTERRUPTS",
     "idf_path":           "C:/Users/Yazid/esp/v5.4.2/esp-idf",
     "build_dir":          "C:/Users/Yazid/Downloads/UP240355_ESP/UP240355_ESP/EXTERNAL INTERRUPTS/build",
