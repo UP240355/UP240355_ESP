@@ -125,7 +125,7 @@ void app_main(void)
     int adc_value;
     
     while(1)
-   {
+    {
         // Leer valor del ADC
         adc_oneshot_read(adc_handle, ADC_CHANNEL, &adc_value);
         
